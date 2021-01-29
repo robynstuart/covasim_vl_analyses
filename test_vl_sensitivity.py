@@ -41,21 +41,16 @@ def test_vl_testing(fig_path=None):
     delay = 1
     start_day = 20
 
-    tn3 = cv.test_num(daily_tests=n_tests, lod={3.0:0.9, 5.0:0.1}, symp_test=1.0, start_day=start_day, test_delay=delay)
-    tn5 = cv.test_num(daily_tests=n_tests, lod={3.0:0.6, 5.0:0.4}, symp_test=1.0, start_day=start_day, test_delay=delay)
-    tp3 = cv.test_prob(symp_prob=0.1, asymp_prob=0.01, lod=3.0, start_day=start_day, test_delay=delay)
-    tp5 = cv.test_prob(symp_prob=0.1, asymp_prob=0.01, lod=5.0, start_day=start_day, test_delay=delay)
-
-    # Define the simulations
-    sim3n = cv.Sim(interventions=tn3, label='90% PCR tests, test_num')
-    sim5n = cv.Sim(interventions=tn5, label='60% PCR tests, test_num')
-    sim3p = cv.Sim(interventions=tp3, label='PCR tests, test_prob')
-    sim5p = cv.Sim(interventions=tp5, label='Rapid tests, test_prob')
+    sims = []
+    for pcr_prop in np.linspace(0,1,5):
+        tn = cv.test_num(daily_tests=n_tests, lod={3.0:pcr_prop, 5.0:1-pcr_prop}, symp_test=5.0, start_day=start_day, test_delay=delay)
+        sim = cv.Sim(interventions=tn, label=f'{pcr_prop*100:.0f}% PCR')
+        sims.append(sim)
 
     # Run and plot results
     to_plot = ['new_infections', 'cum_infections', 'new_inf_neg', 'cum_inf_neg', 'new_noninf_pos', 'cum_noninf_pos', 'new_diagnoses', 'cum_diagnoses']
 
-    msim = cv.MultiSim([sim3n, sim5n])#, sim3p, sim5p])
+    msim = cv.MultiSim(sims)
     msim.run(keep_people=True)
     msim.plot(to_plot=to_plot, do_save=True, fig_path=fig_path, do_show=False)
 
